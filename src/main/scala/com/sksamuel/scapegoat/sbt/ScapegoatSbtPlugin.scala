@@ -63,7 +63,7 @@ object ScapegoatSbtPlugin extends AutoPlugin {
           unmanagedClasspath := (unmanagedClasspath in Compile).value,
           scalacOptions := {
             // find all deps for the compile scope
-            val scapegoatDependencies = (update in Scapegoat).value matching configurationFilter(Provided.name)
+            val scapegoatDependencies = (update in Scapegoat).value matching configurationFilter("scapegoat")
             // ensure we have the scapegoat dependency on the classpath and if so add it as a scalac plugin
             scapegoatDependencies.find(_.getAbsolutePath.contains(ArtifactId)) match {
               case None => throw new Exception(s"Fatal: $ArtifactId not in libraryDependencies ($scapegoatDependencies)")
@@ -106,13 +106,14 @@ object ScapegoatSbtPlugin extends AutoPlugin {
             }
           })
     } ++ Seq(
+      ivyConfigurations += Scapegoat,
       (compile in Scapegoat) := ((compile in Scapegoat) dependsOn scapegoatClean).value,
       scapegoat := (compile in Scapegoat).value,
       scapegoatCleanTask := doScapegoatClean((scapegoatRunAlways in ThisBuild).value, (classDirectory in Scapegoat).value, streams.value.log),
       scapegoatClean := doScapegoatClean(true, (classDirectory in Scapegoat).value, streams.value.log),
       // FIXME Cannot seem to make this a build setting (compile:crossTarget is an undefined setting)
       scapegoatOutputPath := (crossTarget in Compile).value.getAbsolutePath + "/scapegoat-report",
-      libraryDependencies ++= Seq(crossVersion(GroupId %% ArtifactId % (scapegoatVersion in ThisBuild).value % Provided)))
+      libraryDependencies += crossVersion(GroupId %% ArtifactId % (scapegoatVersion in ThisBuild).value % "scapegoat"))
   }
 
   private def crossVersion(mod: ModuleID) = {
