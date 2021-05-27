@@ -12,7 +12,7 @@ object ScapegoatSbtPlugin extends AutoPlugin {
     val Scapegoat = config("scapegoat") extend Compile
 
     lazy val scapegoat = taskKey[Unit]("Run scapegoat quality checks")
-    lazy val scapegoatCleanTask = taskKey[Unit]("Conditionally clean the scapegoat output directories")
+    lazy val scapegoatOptionalClean = taskKey[Unit]("Conditionally clean the scapegoat output directories")
     lazy val scapegoatClean = taskKey[Unit]("Clean the scapegoat output directories")
     lazy val scapegoatVersion = settingKey[String]("The version of the scala plugin to use")
     lazy val scapegoatDisabledInspections = settingKey[Seq[String]]("Inspections that are disabled globally")
@@ -106,9 +106,9 @@ object ScapegoatSbtPlugin extends AutoPlugin {
             }
           })
     } ++ Seq(
-      (compile in Scapegoat) := ((compile in Scapegoat) dependsOn scapegoatClean).value,
+      (compile in Scapegoat) := ((compile in Scapegoat) dependsOn scapegoatOptionalClean).value,
       scapegoat := (compile in Scapegoat).value,
-      scapegoatCleanTask := doScapegoatClean((scapegoatRunAlways in ThisBuild).value, (classDirectory in Scapegoat).value, streams.value.log),
+      scapegoatOptionalClean := doScapegoatClean((scapegoatRunAlways in ThisBuild).value, (classDirectory in Scapegoat).value, streams.value.log),
       scapegoatClean := doScapegoatClean(true, (classDirectory in Scapegoat).value, streams.value.log),
       // FIXME Cannot seem to make this a build setting (compile:crossTarget is an undefined setting)
       scapegoatOutputPath := (crossTarget in Compile).value.getAbsolutePath + "/scapegoat-report",
